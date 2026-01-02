@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from api.serializers import ExperimentSerializer
 from rest_framework.response import Response
-from api.utils import get_result_urls
+from api.utils import get_result_urls,get_recommended_structures_with_viz
 from .aws_clients import get_batch_client,get_s3_client
 import uuid
 from django.conf import settings
@@ -118,7 +118,7 @@ class ExperimentRecommendStructuresAPIView(APIView):
         try:
             experiment = Experiment.objects.get(id=experiment_id, user=request.user)
             results_folder_s3_url = experiment.results_folder_s3_url  + "/recommended_structures/"
-            result_urls = get_result_urls(results_folder_s3_url) 
+            result_urls = get_recommended_structures_with_viz(results_folder_s3_url)
             return Response(result_urls)
 
         except Experiment.DoesNotExist:
