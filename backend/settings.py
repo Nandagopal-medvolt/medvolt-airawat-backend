@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'dj_rest_auth.registration',
     'allauth.socialaccount',
+     "corsheaders",
+
 ]
 
 SITE_ID = 1
@@ -53,6 +55,7 @@ SITE_ID = 1
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -140,3 +143,5 @@ STATIC_URL = 'static/'
 
 AWS_REGION_NAME='us-east-1'
 AWS_STORAGE_BUCKET_NAME="medvolt-cmd-standalone-test"
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True

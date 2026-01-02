@@ -2,6 +2,11 @@ from urllib.parse import urlparse
 from .aws_clients import get_s3_client
 from django.conf import settings
 import py3Dmol
+from typing import Dict, Any
+import pandas as pd
+from io import StringIO
+from typing import Dict, Any
+
 
 def parse_s3_uri(s3_uri: str):
    
@@ -138,3 +143,61 @@ def generate_pdb_visualization(pdb_data):
     view.zoomTo()
     
     return view._make_html()
+
+
+
+def fetch_gyration_radius(s3_uri: str) -> Dict[str, Any]:
+    try:
+        uri_parts = s3_uri.replace("s3://", "").split("/", 1)
+        bucket = uri_parts[0]
+        key = uri_parts[1]
+        
+        s3 = get_s3_client()
+        response = s3.get_object(Bucket=bucket, Key=key)
+        csv_content = response['Body'].read().decode('utf-8')
+        
+        df = pd.read_csv(StringIO(csv_content))
+        
+        if df.empty or 'x' not in df.columns or 'y' not in df.columns:
+            print("error")
+            return {}
+        
+        return {
+            "x": df["x"].tolist(),
+            "y": df["y"].tolist()
+        }
+        
+    except Exception as e:
+        print(f"Error fetching gyration radius data: {e}")
+        return {}
+    
+
+def fetch_cmd_output(s3_uri: str) -> Dict[str, Any]:
+    try:
+        uri_parts = s3_uri.replace("s3://", "").split("/", 1)
+        bucket = uri_parts[0]
+        key = uri_parts[1]
+        
+        s3 = get_s3_client()
+        response = s3.get_object(Bucket=bucket, Key=key)
+        csv_content = response['Body'].read().decode('utf-8')
+        
+        df = pd.read_csv(StringIO(csv_content))
+        
+        # Validate data
+        if df.empty:
+            print("error")
+            return {}
+        
+        results = {}
+        last_row = df.to_dict("index")
+        
+        for key, value in last_row.items():
+            for k, v in value.items():
+                results[k] = v
+        
+        return results
+        
+    except Exception as e:
+        print("Error")
+        return {}

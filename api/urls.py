@@ -11,6 +11,10 @@ urlpatterns = [
     path('experiment-results/<int:experiment_id>/', csrf_exempt(views.ExperimentResultsAPIView.as_view()), name='experiment-results'),
     path('experiment-recommend-structures/<int:experiment_id>/', csrf_exempt(views.ExperimentRecommendStructuresAPIView.as_view()), name='experiment-recommend-structures'),
     path('generate-presigned-url', csrf_exempt(views.PresignUploadView.as_view()), name='generate-presigned-url'),
+    path('experiment-gyration-radius/<int:experiment_id>/', csrf_exempt(views.ExperimentGyrationRadiusAPIView.as_view()), name='experiment-gyration-radius'),
+    path('experiment-rmsd/<int:experiment_id>/', csrf_exempt(views.ExperimentRMSDAPIView.as_view()), name='experiment-rmsd'),
+    path('experiment-cmd-output/<int:experiment_id>/', csrf_exempt(views.ExperimentCMDOutput.as_view()), name='experiment-rmsd'),
+
 
 ]
 

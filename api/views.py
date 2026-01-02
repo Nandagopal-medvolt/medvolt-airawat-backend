@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from api.serializers import ExperimentSerializer
 from rest_framework.response import Response
-from api.utils import get_result_urls,get_recommended_structures_with_viz
+from api.utils import get_result_urls,get_recommended_structures_with_viz,fetch_gyration_radius,fetch_cmd_output
 from .aws_clients import get_batch_client,get_s3_client
 import uuid
 from django.conf import settings
@@ -123,3 +123,46 @@ class ExperimentRecommendStructuresAPIView(APIView):
 
         except Experiment.DoesNotExist:
             return Response({"error": "Experiment not found"}, status=404)
+
+
+class ExperimentGyrationRadiusAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, experiment_id):
+        try:
+            experiment = Experiment.objects.get(id=experiment_id, user=request.user)
+            results_folder_s3_url = experiment.results_folder_s3_url  + "/gyrate.csv"
+            result = fetch_gyration_radius(results_folder_s3_url)
+            return Response(result)
+
+        except Experiment.DoesNotExist:
+            return Response({"error": "Experiment not found"}, status=404)
+        
+
+class ExperimentRMSDAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, experiment_id):
+        try:
+            experiment = Experiment.objects.get(id=experiment_id, user=request.user)
+            results_folder_s3_url = experiment.results_folder_s3_url  + "/rmsd.csv"
+            result = fetch_gyration_radius(results_folder_s3_url)
+            return Response(result)
+
+        except Experiment.DoesNotExist:
+            return Response({"error": "Experiment not found"}, status=404)
+        
+
+class ExperimentCMDOutput(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, experiment_id):
+        try:
+            experiment = Experiment.objects.get(id=experiment_id, user=request.user)
+            results_folder_s3_url = experiment.results_folder_s3_url  + "/output.csv"
+            result = fetch_cmd_output(results_folder_s3_url)
+            return Response(result)
+
+        except Experiment.DoesNotExist:
+            return Response({"error": "Experiment not found"}, status=404)
+        
