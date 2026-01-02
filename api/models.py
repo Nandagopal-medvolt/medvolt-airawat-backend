@@ -16,5 +16,12 @@ class Experiment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     batch_job_id=models.CharField(max_length=100, null=True, blank=True)
 
+    batch_status = models.CharField(max_length=50, null=True, blank=True)
+    batch_status_reason = models.TextField(null=True, blank=True)
+    batch_created_at = models.DateTimeField(null=True, blank=True)
+    batch_started_at = models.DateTimeField(null=True, blank=True)
+    batch_stopped_at = models.DateTimeField(null=True, blank=True)
+    batch_status_updated_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return self.name

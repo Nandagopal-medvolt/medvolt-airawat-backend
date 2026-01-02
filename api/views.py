@@ -11,8 +11,8 @@ import uuid
 from django.conf import settings
 import json
 import base64
-# Create your views here.
-
+from datetime import datetime, timezone as dt_timezone
+from django.utils import timezone
 
 
 def home(request):
@@ -42,12 +42,79 @@ class PresignUploadView(APIView):
 
 class ExperimentAPIView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request):
-        experiments= Experiment.objects.filter(user=request.user)
-        serializer= ExperimentSerializer(experiments, many=True)
-        return Response(serializer.data)
+        experiments = Experiment.objects.filter(user=request.user)
         
+        self._update_batch_statuses(experiments)
+        
+        experiments = Experiment.objects.filter(user=request.user)
+        
+        serializer = ExperimentSerializer(experiments, many=True)
+        return Response(serializer.data)
+    
+    def _update_batch_statuses(self, experiments):
+        experiments_to_update = [
+            exp for exp in experiments 
+            if exp.batch_job_id and self._should_update_status(exp)
+        ]
+        
+        if not experiments_to_update:
+            return
+        
+        batch_job_ids = [exp.batch_job_id for exp in experiments_to_update]
+        
+        try:
+            batch_client = get_batch_client()
+            response = batch_client.describe_jobs(jobs=batch_job_ids)
+            
+            jobs_map = {job['jobId']: job for job in response['jobs']}
+            
+            for exp in experiments_to_update:
+                job = jobs_map.get(exp.batch_job_id)
+                if job:
+                    self._update_experiment_status(exp, job)
+                    
+        except Exception as e:
+            print(f"Error fetching batch statuses: {e}")
+    
+    def _should_update_status(self, experiment):
+        if not experiment.batch_status:
+            return True
+        
+        terminal_states = ['SUCCEEDED', 'FAILED']
+        if experiment.batch_status in terminal_states:
+            return False
+        
+        if experiment.batch_status_updated_at:
+            time_since_update = timezone.now() - experiment.batch_status_updated_at
+            return time_since_update.total_seconds() > 30
+        
+        return True
+    
+    def _update_experiment_status(self, experiment, job_data):
+        experiment.batch_status = job_data['status']
+        experiment.batch_status_reason = job_data.get('statusReason', '')
+        
+        if job_data.get('createdAt'):
+            experiment.batch_created_at = self._convert_timestamp(job_data['createdAt'])
+        if job_data.get('startedAt'):
+            experiment.batch_started_at = self._convert_timestamp(job_data['startedAt'])
+        if job_data.get('stoppedAt'):
+            experiment.batch_stopped_at = self._convert_timestamp(job_data['stoppedAt'])
+        
+        experiment.batch_status_updated_at = timezone.now()
+        experiment.save(update_fields=[
+            'batch_status', 
+            'batch_status_reason',
+            'batch_created_at',
+            'batch_started_at',
+            'batch_stopped_at',
+            'batch_status_updated_at'
+        ])
+    
+    def _convert_timestamp(self, timestamp_ms):
+        return datetime.fromtimestamp(timestamp_ms / 1000, tz=dt_timezone.utc)        
     
 
         # payload = {
