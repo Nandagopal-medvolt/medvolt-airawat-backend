@@ -67,6 +67,8 @@ def get_result_urls(s3_uri, expires=3600):
             elif filename in visualization_files:
                 results["visualizations"].append(item)
             elif "recommended_structures/" in key and key.endswith(".pdb"):
+                name = filename 
+                item["name"] = name
                 results["recommended_structures"].append(item)
     
     return results
